@@ -20,7 +20,8 @@ vim.opt.cursorline = false
 vim.opt.laststatus = 2
 vim.opt.termguicolors = true
 
--- Enable case-insensitive search and highlight matchesk
+vim.opt.foldmethod = "expr"
+vim.opt.foldexpr = "nvim_treesitter#foldexpr()" -- Enable case-insensitive search and highlight matchesk
 vim.o.ignorecase = true
 vim.o.hlsearch = false
 vim.o.incsearch = true
@@ -216,6 +217,7 @@ require("lazy").setup({
   { "saadparwaiz1/cmp_luasnip" }, -- Snippets completions
   { "fatih/vim-go", ft = "go" },
   { "nvim-lualine/lualine.nvim" }, -- Status line
+  { "AndrewRadev/splitjoin.vim" },
   { "akinsho/toggleterm.nvim", config = true }, -- Automatically load with default config
   --  { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
   {
@@ -1115,6 +1117,10 @@ require("lazy").setup({
         additional_vim_regex_highlighting = { "ruby" },
       },
       indent = { enable = true, disable = { "ruby" } },
+      folding = {
+        enable = true,
+        disable = {},
+      },
     },
     -- There are additional nvim-treesitter modules that you can use to interact
     -- with nvim-treesitter. You should go explore a few and see what interests you:
