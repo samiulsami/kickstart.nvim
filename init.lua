@@ -219,6 +219,18 @@ require("lazy").setup({
   { "akinsho/toggleterm.nvim", config = true }, -- Automatically load with default config
   --  { "catppuccin/nvim", name = "catppuccin", priority = 1000 },
   {
+    "rcarriga/nvim-notify",
+    config = function()
+      vim.notify = require("notify") -- Set as the default notify handler
+      require("notify").setup({
+        stages = "fade",
+        timeout = 3000,
+        background_colour = "#000000",
+      })
+    end,
+    event = "VeryLazy", -- Load after other plugins
+  },
+  {
     "nvim-treesitter/nvim-treesitter-context",
     dependencies = { "nvim-treesitter/nvim-treesitter" }, -- Ensure nvim-treesitter is loaded
     config = function()
