@@ -921,7 +921,13 @@ require("lazy").setup({
       },
     },
   },
-
+  {
+    "lukas-reineke/indent-blankline.nvim",
+    main = "ibl",
+    ---@module "ibl"
+    ---@type ibl.config
+    opts = {},
+  },
   { -- Autocompletion
     "hrsh7th/nvim-cmp",
     event = "InsertEnter",
@@ -1199,7 +1205,7 @@ require("lualine").setup({
     lualine_z = { "location" },
   },
 })
-
+require("ibl").setup()
 vim.keymap.set("n", "<C-Up>", ":resize +2<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<C-Down>", ":resize -2<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<C-Left>", ":vertical resize -2<CR>", { noremap = true, silent = true })
