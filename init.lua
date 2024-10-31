@@ -656,6 +656,7 @@ require("lazy").setup({
       vim.keymap.set("n", "<leader>sw", builtin.grep_string, { desc = "[S]earch current [W]ord" })
       vim.keymap.set("n", "<leader>sg", builtin.live_grep, { desc = "[S]earch by [G]rep" })
       vim.keymap.set("n", "<leader>sd", builtin.diagnostics, { desc = "[S]earch [D]iagnostics" })
+      vim.keymap.set("n", "<leader>sn", ":Telescope notify<CR>", { desc = "[S]earch [N]otify" })
       vim.keymap.set("n", "<leader>s.", builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set("n", "<leader><leader>", builtin.buffers, { desc = "[ ] Find existing buffers" })
       vim.keymap.set("n", "<leader>/", function()
@@ -1204,6 +1205,13 @@ vim.keymap.set("n", "<C-Down>", ":resize -2<CR>", { noremap = true, silent = tru
 vim.keymap.set("n", "<C-Left>", ":vertical resize -2<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<C-Right>", ":vertical resize +2<CR>", { noremap = true, silent = true })
 
+vim.cmd([[
+  augroup GitBranchChange
+    autocmd!
+    autocmd BufReadPost * if &filetype == 'git' | silent! LspRestart | endif
+  augroup END
+]])
+
 -- Bind <leader>gm to :Git mergetool
 vim.keymap.set("n", "<leader>gm", ":Git mergetool<CR>", { noremap = true, silent = true })
 vim.keymap.set("n", "<leader>lr", ":LspRestart<CR>", { noremap = true, silent = true })
@@ -1211,11 +1219,5 @@ vim.keymap.set("n", "<leader>lr", ":LspRestart<CR>", { noremap = true, silent = 
 --vim.cmd.colorscheme("catppuccin-mocha")
 vim.cmd("colorscheme tokyonight-night")
 
-vim.cmd([[
-  augroup GitBranchChange
-    autocmd!
-    autocmd BufEnter,BufWinEnter * silent! LspRestart
-  augroup END
-]])
 -- The line beneath this is called `modeline`. See `:help modeline`
 -- vim: ts=2 sts=2 sw=2 et
