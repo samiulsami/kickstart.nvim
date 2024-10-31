@@ -822,7 +822,28 @@ require("lazy").setup({
       capabilities = vim.tbl_deep_extend("force", capabilities, require("cmp_nvim_lsp").default_capabilities())
       local servers = {
         -- clangd = {},
-        gopls = {},
+
+        gopls = {
+          cmd = { "gopls" },
+          filetypes = { "go", "gomod", "gowork", "gotmpl" },
+          root_dir = require("lspconfig.util").root_pattern("go.work", "go.mod", ".git"),
+          settings = {
+            gopls = {
+              completeUnimported = true, -- Autocomplete for unimported packages
+              usePlaceholders = true, -- Adds placeholders in function parameters
+              gofumpt = true, -- Use 'gofumpt' formatting
+              staticcheck = true, -- Enable 'staticcheck' diagnostics
+              analyses = {
+                unusedparams = true, -- Enable analysis for unused parameters
+              },
+              codelenses = {
+                gc_details = true, -- Show diagnostics for garbage collection
+                generate = true, -- Enable `go generate` codelens
+                tidy = true, -- Run `go mod tidy` on save
+              },
+            },
+          },
+        },
         -- pyright = {},
         -- rust_analyzer = {},
         --
