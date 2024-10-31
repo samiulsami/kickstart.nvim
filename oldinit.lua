@@ -41,7 +41,7 @@ vim.api.nvim_create_autocmd("CursorHold", {
 })
 
 -- Toggle between absolute and relative line numbers with F2
-vim.api.nvim_set_keymap("n", "<F7>", ":set relativenumber!<CR>", { noremap = true, silent = true })
+vim.api.nvim_set_keymap("n", "<F2>", ":set relativenumber!<CR>", { noremap = true, silent = true })
 
 -- Center the screen when moving half a page up or down
 vim.api.nvim_set_keymap("n", "<C-d>", "<C-d>zz", { noremap = true })
@@ -211,9 +211,12 @@ require("lazy").setup({
   { "williamboman/mason.nvim" }, -- Mason package manager
   { "williamboman/mason-lspconfig.nvim" }, -- Mason LSP integration
   { "neovim/nvim-lspconfig" }, -- LSP configuration
+  { "hrsh7th/cmp-nvim-lsp" },
   { "hrsh7th/cmp-buffer" }, -- Buffer completions
+  { "hrsh7th/cmp-path" }, -- Path completions
   { "hrsh7th/cmp-cmdline" }, -- Command line completions
   { "saadparwaiz1/cmp_luasnip" }, -- Snippets completions
+  { "L3MON4D3/LuaSnip" }, -- Snippet engine
   { "fatih/vim-go", ft = "go" },
   { "nvim-lualine/lualine.nvim" }, -- Status line
   { "akinsho/toggleterm.nvim", config = true }, -- Automatically load with default config
@@ -495,17 +498,6 @@ require("lazy").setup({
       vim.keymap.set("n", "<F3>", dap.step_over)
       vim.keymap.set("n", "<F4>", dap.step_out)
       vim.keymap.set("n", "<F5>", dap.step_back)
-      vim.keymap.set("n", "<F6>", function()
-        require("dap").terminate()
-        require("dapui").close()
-      end, { desc = "Stop debugging session" })
-
-      vim.keymap.set("n", "<leader>dus", function()
-        local widgets = require("dap.ui.widgets")
-        local sidebar = widgets.sidebar(widgets.scopes)
-        sidebar.open()
-      end, { desc = "Open debugging sidebar" })
-
       vim.keymap.set("n", "<F13>", dap.restart)
 
       -- dap.listeners.before.attach.dapui_config = function()
