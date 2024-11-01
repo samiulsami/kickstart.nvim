@@ -214,7 +214,6 @@ vim.opt.rtp:prepend(lazypath)
 -- NOTE: Here is where you install your plugins.
 require("lazy").setup({
 	-- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
-	{ "tpope/vim-sleuth" }, -- Detect tabstop and shiftwidth automatically
 	{ "williamboman/mason.nvim" }, -- Mason package manager
 	{ "williamboman/mason-lspconfig.nvim" }, -- Mason LSP integration
 	{ "neovim/nvim-lspconfig" }, -- LSP configuration
@@ -433,21 +432,6 @@ require("lazy").setup({
 		"windwp/nvim-autopairs",
 		event = "InsertEnter",
 		opts = {},
-	},
-
-	{
-		"ray-x/go.nvim",
-		dependencies = { -- optional packages
-			"ray-x/guihua.lua",
-			"neovim/nvim-lspconfig",
-			"nvim-treesitter/nvim-treesitter",
-		},
-		config = function()
-			require("go").setup()
-		end,
-		event = { "CmdlineEnter" },
-		ft = { "go", "gomod" },
-		build = ':lua require("go.install").update_all_sync()', -- if you need to install/update all binaries
 	},
 	{
 		"nvim-neotest/neotest",
@@ -770,6 +754,77 @@ require("lazy").setup({
 			},
 		},
 	},
+
+	{
+		"olexsmir/gopher.nvim",
+		ft = "go",
+		-- branch = "develop", -- if you want develop branch
+		-- keep in mind, it might break everything
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+			"nvim-treesitter/nvim-treesitter",
+			"mfussenegger/nvim-dap", -- (optional) only if you use `gopher.dap`
+		},
+		-- (optional) will update plugin's deps on every update
+		config = function()
+			require("gopher").setup({
+				commands = {
+					go = "go",
+					gomodifytags = "gomodifytags",
+					gotests = "gotests",
+					impl = "impl",
+					iferr = "iferr",
+					dlv = "dlv",
+				},
+				gotests = {
+					-- gotests doesn't have template named "default" so this plugin uses "default" to set the default template
+					template = "default",
+					-- path to a directory containing custom test code templates
+					template_dir = nil,
+					-- switch table tests from using slice to map (with test name for the key)
+					-- works only with gotests installed from develop branch
+					named = false,
+				},
+				gotag = {
+					transform = "camelcase",
+				},
+			})
+
+			vim.keymap.set(
+				"n",
+				"<leader>gtj",
+				":GoTagAdd json<CR>",
+				{ noremap = true, silent = true, desc = "Add json tags" }
+			)
+			vim.keymap.set(
+				"n",
+				"<leader>gty",
+				":GoTagAdd yaml<CR>",
+				{ noremap = true, silent = true, desc = "Add yaml tags" }
+			)
+			vim.keymap.set(
+				"n",
+				"<leader>gto",
+				":GoTestAdd<CR>",
+				{ noremap = true, silent = true, desc = "Add test for function under curson" }
+			)
+			vim.keymap.set(
+				"n",
+				"<leader>gta",
+				":GoTestAll<CR>",
+				{ noremap = true, silent = true, desc = "Add tests for all funcs in file" }
+			)
+			vim.keymap.set(
+				"n",
+				"<leader>gte",
+				":GoTestAll<CR>",
+				{ noremap = true, silent = true, desc = "Add tests for all exported funcs in file" }
+			)
+		end,
+		---@type gopher.Config
+		opts = {},
+	},
+
 	{ "Bilal2453/luvit-meta", lazy = true },
 	{
 		-- Main LSP Configuration
@@ -914,8 +969,12 @@ require("lazy").setup({
 
 					settings = {
 						gopls = {
+							completeUnimported = true,
+							usePlaceholders = true,
 							analyses = {
 								unusedparams = true,
+								deprecated = true,
+								fillreturns = true,
 							},
 							staticcheck = true,
 							gofumpt = true,
@@ -963,10 +1022,6 @@ require("lazy").setup({
 				"stylua", -- Used to format Lua code
 			})
 			require("mason-tool-installer").setup({ ensure_installed = ensure_installed })
-			local on_attach = function(client, bufnr)
-				-- Enable completion triggered by <c-x><c-o>
-				vim.api.nvim_buf_set_option(bufnr, "omnifunc", "v:lua.vim.lsp.omnifunc")
-			end
 			require("mason-lspconfig").setup({
 				handlers = {
 					function(server_name)
@@ -1051,7 +1106,9 @@ require("lazy").setup({
 					},
 				},
 			},
+			"tzachar/cmp-fuzzy-buffer", -- Fuzzy buffer source
 			"saadparwaiz1/cmp_luasnip",
+			"hrsh7th/cmp-buffer",
 			"hrsh7th/cmp-nvim-lsp",
 			"hrsh7th/cmp-path",
 		},
@@ -1128,9 +1185,11 @@ require("lazy").setup({
 					{ name = "luasnip" },
 					{ name = "path" },
 					{ name = "buffer" },
+					{ name = "fuzzy_buffer" },
 				},
+
 				sorting = {
-					priority_weight = 2,
+					priority_weight = 20,
 					comparators = {
 						require("cmp_fuzzy_path.compare"),
 						compare.offset,
@@ -1154,7 +1213,6 @@ require("lazy").setup({
 			})
 
 			require("cmp_git").setup()
-
 			cmp.setup.cmdline({ "/", "?" }, {
 				mapping = cmp.mapping.preset.cmdline(),
 				sources = {
