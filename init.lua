@@ -196,12 +196,13 @@ vim.opt.rtp:prepend(lazypath)
 require("lazy").setup({
   {
     "iamcco/markdown-preview.nvim",
-    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
-    build = "cd app && yarn install",
+    build = "cd app && npm install",
     init = function()
-      vim.g.mkdp_filetypes = { "markdown" }
+      vim.g.mkdp_filetypes = { "markdown" } -- Set markdown file types for the preview
     end,
-    ft = { "markdown" },
+    config = function()
+      vim.keymap.set("n", "<Leader>mp", "<Plug>MarkdownPreview", { desc = "Markdown Preview" }) -- Key mapping for Markdown Preview
+    end,
   },
   { "kkharji/sqlite.lua" },
   {
