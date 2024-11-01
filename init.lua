@@ -16,6 +16,7 @@ vim.o.shiftwidth = 4
 vim.o.expandtab = true
 vim.opt.swapfile = false
 vim.opt.backup = false
+vim.opt.writebackup = false
 vim.opt.undodir = os.getenv("HOME") .. "/.vim/undodir"
 vim.opt.cursorline = false
 vim.opt.laststatus = 2
@@ -33,7 +34,7 @@ vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
 
 -- Enable mouse support
 vim.o.mouse = "a"
-vim.opt.updatetime = 50
+vim.opt.updatetime = 300
 vim.opt.colorcolumn = ""
 -- Enable autoread
 vim.opt.autoread = true
@@ -108,12 +109,6 @@ vim.opt.undofile = true
 -- Case-insensitive searching UNLESS \C or one or more capital letters in the search term
 vim.opt.ignorecase = true
 vim.opt.smartcase = true
-
--- Keep signcolumn on by default
-vim.opt.signcolumn = "yes"
-
--- Decrease update time
-vim.opt.updatetime = 250
 
 -- Decrease mapped sequence wait time
 -- Displays which-key popup sooner
@@ -216,12 +211,18 @@ require("lazy").setup({
     "neoclide/coc.nvim",
     branch = "release",
     config = function()
+      function _G.check_back_space()
+        local col = vim.fn.col(".") - 1
+        return col == 0 or vim.fn.getline("."):sub(col, col):match("%s") ~= nil
+      end
+
+      vim.api.nvim_create_augroup("CocGroup", {})
       vim.api.nvim_create_autocmd("CursorHold", {
-        pattern = "*",
-        callback = function()
-          vim.fn.CocActionAsync("highlight")
-        end,
+        group = "CocGroup",
+        command = "silent call CocActionAsync('highlight')",
+        desc = "Highlight symbol under cursor on CursorHold",
       })
+
       -- Trigger completion with <C-space>
       vim.api.nvim_set_keymap("i", "<C-Space>", "coc#refresh()", { noremap = true, silent = true, expr = true })
       vim.api.nvim_set_keymap("n", "<leader>cd", ":CocList diagnostics<CR>", { noremap = true, silent = true }) -- Show diagnostics
@@ -286,7 +287,6 @@ require("lazy").setup({
           width = 30, -- Width of the tree
           side = "left", -- Positioning of the tree
           adaptive_size = true, -- Do not auto-resize the tree
-          signcolumn = "yes", -- Show signcolumn
           number = true, -- Show line numbers
           relativenumber = true, -- Use relative line numbers if you want
         },
@@ -627,33 +627,70 @@ require("lazy").setup({
       { "nvim-tree/nvim-web-devicons", enabled = vim.g.have_nerd_font },
     },
     config = function()
-      local telescope_defaults = {
-        file_ignore_patterns = { "node_modules/*", ".git/*", "vendor/*" },
-        history = {
-          path = "~/.local/share/nvim/telescope_history.sqlite3", -- Save search history to a file
-          limit = 100, -- Limit the number of saved entries
-        },
-        mappings = {
-          i = {
-            ["<A-p>"] = require("telescope.actions").cycle_history_prev, -- Navigate to previous search
-            ["<A-n>"] = require("telescope.actions").cycle_history_next, -- Navigate to next search
+      -- Initialize telescope defaults
+      local telescope_setup = {
+        defaults = {
+          file_ignore_patterns = { "node_modules/*", ".git/*", "vendor/*" },
+          history = {
+            path = "~/.local/share/nvim/telescope_history.sqlite3",
+            limit = 100,
+          },
+          mappings = {
+            i = {
+              ["<A-p>"] = require("telescope.actions").cycle_history_prev,
+              ["<A-n>"] = require("telescope.actions").cycle_history_next,
+            },
+          },
+          preview = {
+            treesitter = true,
           },
         },
-        preview = {
-          treesitter = true,
-        },
-      }
-
-      require("telescope").setup({
-        -- You can put your default mappings / updates / etc. in here
-        --  All the info you're looking for is in `:help telescope.setup()`
-        defaults = telescope_defaults,
         extensions = {
           ["ui-select"] = {
             require("telescope.themes").get_dropdown(),
           },
         },
-      })
+      }
+
+      -- Store initial ignore patterns and state
+      local current_ignore_patterns = telescope_setup.defaults.file_ignore_patterns
+      _G.ignore_patterns_active = true -- Use _G to make it global
+
+      -- Function to toggle ignore patterns globally
+      function _G.toggle_ignore_patterns()
+        -- Toggle the state of ignore patterns
+        ignore_patterns_active = not ignore_patterns_active
+
+        if ignore_patterns_active then
+          current_ignore_patterns = telescope_setup.defaults.file_ignore_patterns
+        else
+          current_ignore_patterns = {}
+        end
+
+        -- Update Telescope defaults without a complete re-setup
+        require("telescope").setup({
+          defaults = {
+            file_ignore_patterns = current_ignore_patterns,
+            history = telescope_setup.defaults.history,
+            mappings = telescope_setup.defaults.mappings,
+            preview = telescope_setup.defaults.preview,
+          },
+          extensions = telescope_setup.extensions,
+        })
+
+        print("Telescope ignore patterns updated to:", vim.inspect(current_ignore_patterns))
+      end
+
+      -- Set up Telescope initially
+      require("telescope").setup(telescope_setup)
+
+      -- Key mapping to toggle ignore patterns
+      vim.api.nvim_set_keymap(
+        "n",
+        "<leader>ta",
+        ":lua toggle_ignore_patterns()<CR>",
+        { noremap = true, silent = true, desc = "[T]oggle ignore patterns" }
+      )
 
       -- Enable Telescope extensions if they are installed
       pcall(require("telescope").load_extension, "fzf")
@@ -673,6 +710,7 @@ require("lazy").setup({
 
       vim.api.nvim_set_keymap("n", "gd", "<cmd>Telescope coc definitions<CR>", { noremap = true, silent = true })
       vim.api.nvim_set_keymap("n", "gr", "<cmd>Telescope coc references<CR>", { noremap = true, silent = true })
+      vim.api.nvim_set_keymap("n", "gi", "<cmd>Telescope coc implementations<CR>", { noremap = true, silent = true })
       vim.api.nvim_set_keymap(
         "n",
         "<leader>sd",
@@ -696,50 +734,6 @@ require("lazy").setup({
           prompt_title = "Live Grep in Open Files",
         })
       end, { desc = "[S]earch [/] in Open Files" })
-
-      vim.api.nvim_create_user_command("SearchVendor", function()
-        require("telescope").setup({
-          defaults = {
-            file_ignore_patterns = {},
-            history = {
-              path = "~/.local/share/nvim/telescope_history.sqlite3", -- Save search history to a file
-              limit = 100, -- Limit the number of saved entries
-            },
-            mappings = {
-              i = {
-                ["<A-p>"] = require("telescope.actions").cycle_history_prev, -- Navigate to previous search
-                ["<A-n>"] = require("telescope.actions").cycle_history_next, -- Navigate to next search
-              },
-            },
-            preview = {
-              treesitter = true,
-            },
-          },
-          extensions = {
-            ["ui-select"] = {
-              require("telescope.themes").get_dropdown(),
-            },
-          },
-        })
-        require("telescope.builtin").live_grep({
-          search_dirs = { "vendor" },
-          prompt_title = "Live Grep in Vendor Directory",
-          additional_args = function()
-            return { "--hidden" }
-          end, -- Include hidden files in the search
-        })
-
-        require("telescope").setup({
-          defaults = telescope_defaults,
-          extensions = {
-            ["ui-select"] = {
-              require("telescope.themes").get_dropdown(),
-            },
-          },
-        })
-      end, {})
-      -- Optional: Map the command to a key combination, e.g., <leader>sv
-      vim.api.nvim_set_keymap("n", "<leader>sv", ":SearchVendor<CR>", { noremap = true, silent = true })
 
       vim.api.nvim_set_keymap(
         "n",
