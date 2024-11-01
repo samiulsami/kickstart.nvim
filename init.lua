@@ -194,6 +194,24 @@ vim.opt.rtp:prepend(lazypath)
 --
 -- NOTE: Here is where you install your plugins.
 require("lazy").setup({
+  {
+    "iamcco/markdown-preview.nvim",
+    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+    build = "cd app && yarn install",
+    init = function()
+      vim.g.mkdp_filetypes = { "markdown" }
+    end,
+    ft = { "markdown" },
+  },
+  { "kkharji/sqlite.lua" },
+  {
+    "nvim-telescope/telescope-frecency.nvim",
+    config = function()
+      require("telescope").load_extension("frecency")
+    end,
+  },
+
+  { "nvim-telescope/telescope-dap.nvim" },
   { "fannheyward/telescope-coc.nvim" },
 
   -- NOTE: Plugins can be added with a link (or for a github repo: 'owner/repo' link).
@@ -633,16 +651,16 @@ require("lazy").setup({
           file_ignore_patterns = { "node_modules/*", ".git/*", "vendor/*" },
           history = {
             path = "~/.local/share/nvim/telescope_history.sqlite3",
-            limit = 100,
-          },
-          mappings = {
-            i = {
-              ["<A-p>"] = require("telescope.actions").cycle_history_prev,
-              ["<A-n>"] = require("telescope.actions").cycle_history_next,
-            },
+            limit = 200,
           },
           preview = {
             treesitter = true,
+          },
+          mappings = {
+            n = {
+              ["<S-p>"] = require("telescope.actions").cycle_history_prev,
+              ["<S-n>"] = require("telescope.actions").cycle_history_next,
+            },
           },
         },
         extensions = {
@@ -687,15 +705,18 @@ require("lazy").setup({
       -- Key mapping to toggle ignore patterns
       vim.api.nvim_set_keymap(
         "n",
-        "<leader>ta",
+        "<leader>ti",
         ":lua toggle_ignore_patterns()<CR>",
-        { noremap = true, silent = true, desc = "[T]oggle ignore patterns" }
+        { noremap = true, silent = true, desc = "[T]oggle [I]gnore patterns" }
       )
 
       -- Enable Telescope extensions if they are installed
       pcall(require("telescope").load_extension, "fzf")
       pcall(require("telescope").load_extension, "ui-select")
       pcall(require("telescope").load_extension, "coc")
+      pcall(require("telescope").load_extension, "smart_history")
+      pcall(require("telescope").load_extension, "dap")
+
       -- See `:help telescope.builtin`
       local builtin = require("telescope.builtin")
       vim.keymap.set("n", "<leader>sh", builtin.help_tags, { desc = "[S]earch [H]elp" })
@@ -708,9 +729,32 @@ require("lazy").setup({
 
       -- Set key mappings for various CoC features
 
-      vim.api.nvim_set_keymap("n", "gd", "<cmd>Telescope coc definitions<CR>", { noremap = true, silent = true })
-      vim.api.nvim_set_keymap("n", "gr", "<cmd>Telescope coc references<CR>", { noremap = true, silent = true })
-      vim.api.nvim_set_keymap("n", "gi", "<cmd>Telescope coc implementations<CR>", { noremap = true, silent = true })
+      vim.api.nvim_set_keymap(
+        "n",
+        "gd",
+        "<cmd>Telescope coc definitions<CR>",
+        { noremap = true, silent = true, desc = "[G]oto [D]efinition" }
+      )
+      vim.api.nvim_set_keymap(
+        "n",
+        "gr",
+        "<cmd>Telescope coc references<CR>",
+        { noremap = true, silent = true, desc = "[G]oto [R]eferences" }
+      )
+      vim.api.nvim_set_keymap(
+        "n",
+        "gi",
+        "<cmd>Telescope coc implementations<CR>",
+        { noremap = true, silent = true, desc = "[G]oto [I]mplementations" }
+      )
+
+      vim.api.nvim_set_keymap(
+        "n",
+        "<leader>sb",
+        "<cmd>Telescope dap list_breakpoints<CR>",
+        { noremap = true, silent = true, desc = "[S]earch [B]reakpoints" }
+      )
+
       vim.api.nvim_set_keymap(
         "n",
         "<leader>sd",
@@ -742,8 +786,6 @@ require("lazy").setup({
         { noremap = true, silent = true }
       )
 
-      -- Create a command to search only in the vendor directory
-      -- Keymap to resume the last search and switch to normal mode
       vim.keymap.set("n", "<leader>sr", function()
         -- Resume the last search
         require("telescope.builtin").resume()
@@ -1038,6 +1080,7 @@ vim.cmd([[
 -- Bind <leader>gm to :Git mergetool
 vim.keymap.set("n", "<leader>gm", ":Git mergetool<CR>", { noremap = true, silent = true })
 
+-- Basic key mappings for Markdown
 --vim.cmd.colorscheme("catppuccin-mocha")
 --vim.cmd 'colorscheme tokyonight-night'
 -- The line beneath this is called `modeline`. See `:help modeline`
